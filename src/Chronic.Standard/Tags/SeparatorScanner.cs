@@ -5,16 +5,16 @@ namespace Chronic
 {
     public class SeparatorScanner : ITokenScanner
     {
-        static readonly dynamic[] Patterns = new dynamic[]
-            {
-                new { Pattern = @"^,$".Compile(), Tag = new SeparatorComma() },
-                new { Pattern = @"^and$".Compile(), Tag = new SeparatorComma() },
-                new { Pattern = @"^(at|@)$".Compile(), Tag = new SeparatorAt() },
-                new { Pattern = @"^in$".Compile(), Tag = new SeparatorIn() },
-                new { Pattern = @"^/$".Compile(), Tag = new SeparatorDate(Separator.Type.Slash) },
-                new { Pattern = @"^-$".Compile(), Tag = new SeparatorDate(Separator.Type.Dash) },
-                new { Pattern = @"^on$".Compile(), Tag = new SeparatorOn() },
-            };
+        private static readonly Dictionary<Regex, Separator> Patterns = new Dictionary<Regex, Separator>
+        {
+            {@"^,$".Compile(), new SeparatorComma()},
+            {@"^and$".Compile(), new SeparatorComma()},
+            {@"^(at|@)$".Compile(), new SeparatorAt()},
+            {@"^in$".Compile(), new SeparatorIn()},
+            {@"^/$".Compile(), new SeparatorDate(Separator.Type.Slash)},
+            {@"^-$".Compile(), new SeparatorDate(Separator.Type.Dash)},
+            {@"^on$".Compile(), new SeparatorOn()},
+        };
 
         public IList<Token> Scan(IList<Token> tokens, Options options)
         {
@@ -26,9 +26,9 @@ namespace Chronic
         {
             foreach (var pattern in Patterns)
             {
-                if (pattern.Pattern.IsMatch(token.Value))
+                if (pattern.Key.IsMatch(token.Value))
                 {
-                    token.Tag(pattern.Tag);
+                    token.Tag(pattern.Value);
                 }
             }
         }

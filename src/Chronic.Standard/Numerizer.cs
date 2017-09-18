@@ -1,39 +1,39 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Chronic
 {
     public static class Numerizer
     {
-        static readonly dynamic[,] DIRECT_NUMS = new dynamic[,]
-            {
-                {"eleven", "11"},
-                {"twelve", "12"},
-                {"thirteen", "13"},
-                {"fourteen", "14"},
-                {"fifteen", "15"},
-                {"sixteen", "16"},
-                {"seventeen", "17"},
-                {"eighteen", "18"},
-                {"nineteen", "19"},
-                {"ninteen", "19"}, // Common mis-spelling
-                {"zero", "0"},
-                {"one", "1"},
-                {"two", "2"},
-                {"three", "3"},
-                {@"four(\W|$)", "4$1"},
-                // The weird regex is so that it matches four but not fourty
-                {"five", "5"},
-                {@"six(\W|$)", "6$1"},
-                {@"seven(\W|$)", "7$1"},
-                {@"eight(\W|$)", "8$1"},
-                {@"nine(\W|$)", "9$1"},
-                {"ten", "10"},
-                {@"\ba[\b^$]", "1"}
-                // doesn"t make sense for an "a" at the end to be a 1
-            };
+        private static readonly Dictionary<string, string> DIRECT_NUMS = new Dictionary<string, string>
+        {
+            {"eleven", "11"},
+            {"twelve", "12"},
+            {"thirteen", "13"},
+            {"fourteen", "14"},
+            {"fifteen", "15"},
+            {"sixteen", "16"},
+            {"seventeen", "17"},
+            {"eighteen", "18"},
+            {"nineteen", "19"},
+            {"ninteen", "19"}, // Common mis-spelling
+            {"zero", "0"},
+            {"one", "1"},
+            {"two", "2"},
+            {"three", "3"},
+            {@"four(\W|$)", "4$1"},
+            // The weird regex is so that it matches four but not fourty
+            {"five", "5"},
+            {@"six(\W|$)", "6$1"},
+            {@"seven(\W|$)", "7$1"},
+            {@"eight(\W|$)", "8$1"},
+            {@"nine(\W|$)", "9$1"},
+            {"ten", "10"},
+            {@"\ba[\b^$]", "1"}
+            // doesn"t make sense for an "a" at the end to be a 1
+        };
 
-        static readonly dynamic[,] ORDINALS = new dynamic[,]
-            {
+        static readonly Dictionary<string, string> ORDINALS = new Dictionary<string, string> {
                 {"first", "1"},
                 {"third", "3"},
                 {"fourth", "4"},
@@ -45,8 +45,7 @@ namespace Chronic
                 {"tenth", "10"}
             };
 
-        static readonly dynamic[,] TEN_PREFIXES = new dynamic[,]
-            {
+        static readonly Dictionary<string, int> TEN_PREFIXES = new Dictionary<string, int> {
                 {"twenty", 20},
                 {"thirty", 30},
                 {"forty", 40},
@@ -58,13 +57,12 @@ namespace Chronic
                 {"ninety", 90}
             };
 
-        static readonly dynamic[,] BIG_PREFIXES = new dynamic[,]
-            {
+        static readonly Dictionary<string, long> BIG_PREFIXES = new Dictionary<string, long> {
                 {"hundred", 100},
                 {"thousand", 1000},
                 {"million", 1000000},
                 {"billion", 1000000000},
-                {"trillion", 1000000000000},
+                {"trillion", 1000000000000}
             };
 
         public static string Numerize(string value)
@@ -79,46 +77,28 @@ namespace Chronic
 
             // easy/direct replacements
 
-            DIRECT_NUMS.ForEach<string, string>(
-                (p, r) =>
-                    result =
-                    Regex.Replace(
-                        result,
-                        p,
-                        "<num>" + r));
+            foreach (var p in DIRECT_NUMS)
+            {
+                result = Regex.Replace(result, p.Key, "<num>" + p.Value);
+            }
 
-            ORDINALS.ForEach<string, string>(
-                (p, r) =>
-                    result =
-                    Regex.Replace(
-                        result,
-                        p,
-                        "<num>" + r +
-                            p.
-                            LastCharacters
-                            (2)));
+            foreach (var p in ORDINALS)
+                result = Regex.Replace(result, p.Key, "<num>" + p.Value + p.Key.LastCharacters(2));
 
             // ten, twenty, etc.
+            foreach (var p in TEN_PREFIXES)
+                result = Regex.Replace(result, "(?:" + p.Key + @") *<num>(\d(?=[^\d]|$))*",
+                    match => "<num>" + (p.Value + int.Parse(match.Groups[1].Value)));
+            foreach (var p in TEN_PREFIXES)
+                result = Regex.Replace(result, p.Key, "<num>" + p.Value);
 
-            TEN_PREFIXES.ForEach<string, int>(
-                (p, r) =>
-                    result =
-                    Regex.Replace(
-                        result,
-                        "(?:" + p + @") *<num>(\d(?=[^\d]|$))*",
-                        match => "<num>" + (r + int.Parse(match.Groups[1].Value))));
-
-            TEN_PREFIXES.ForEach<string, int>(
-                (p, r) => result = Regex.Replace(result, p, "<num>" + r.ToString()));
 
             // hundreds, thousands, millions, etc.
-
-            BIG_PREFIXES.ForEach<string, long>(
-                (p, r) =>
-                    {
-                    result = Regex.Replace(result, @"(?:<num>)?(\d*) *" + p, match => "<num>" + (r * int.Parse(match.Groups[1].Value)).ToString());
-                    result = Andition(result);
-                    });
+            foreach (var p in BIG_PREFIXES)
+            {
+                result = Regex.Replace(result, @"(?:<num>)?(\d*) *" + p.Key, match => "<num>" + (p.Value * int.Parse(match.Groups[1].Value)).ToString());
+                result = Andition(result);
+            }
 
 
             // fractional addition
@@ -138,8 +118,8 @@ namespace Chronic
                 var match = pattern.Match(result);
                 if (match.Success == false)
                     break;
-                result = result.Substring(0, match.Index) + 
-                    "<num>" + ((int.Parse(match.Groups[1].Value) + int.Parse(match.Groups[3].Value)).ToString()) +
+                result = result.Substring(0, match.Index) +
+                    "<num>" + ((int.Parse(match.Groups[1].Value) + int.Parse(match.Groups[3].Value))) +
                     result.Substring(match.Index + match.Length);
             }
             return result;

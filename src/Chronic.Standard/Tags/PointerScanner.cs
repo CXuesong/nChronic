@@ -5,12 +5,12 @@ namespace Chronic
 {
     public class PointerScanner : ITokenScanner
     {
-        static readonly dynamic[] Patterns = new dynamic[]
-            {
-                new { Pattern = new Regex(@"\bin\b"), Tag = new Pointer(Pointer.Type.Future) },
-                new { Pattern = new Regex(@"\bfuture\b"), Tag = new Pointer(Pointer.Type.Future) },
-                new { Pattern = new Regex(@"\bpast\b"), Tag = new Pointer(Pointer.Type.Past) },
-            };
+        private static readonly Dictionary<Regex, Pointer> Patterns = new Dictionary<Regex, Pointer>
+        {
+            {new Regex(@"\bin\b"), new Pointer(Pointer.Type.Future)},
+            {new Regex(@"\bfuture\b"), new Pointer(Pointer.Type.Future)},
+            {new Regex(@"\bpast\b"), new Pointer(Pointer.Type.Past)},
+        };
 
         public IList<Token> Scan(IList<Token> tokens, Options options)
         {
@@ -22,11 +22,11 @@ namespace Chronic
         {
             foreach (var pattern in Patterns)
             {
-                if (pattern.Pattern.IsMatch(token.Value))
+                if (pattern.Key.IsMatch(token.Value))
                 {
-                    token.Tag(pattern.Tag);
+                    token.Tag(pattern.Value);
                 }
-            }            
+            }
         }
     }
 }

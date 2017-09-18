@@ -11,7 +11,11 @@ namespace Chronic
 
         public static Regex Compile(this string @this)
         {
-            return new Regex(@this, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            return new Regex(@this, RegexOptions.IgnoreCase
+#if NETSTANDARD1_5
+            | RegexOptions.Compiled
+#endif
+                );
         }
 
         public static string LastCharacters(this string @this, int numberOfCharsToTake)

@@ -4,12 +4,12 @@ namespace Chronic
 {
     public class GrabberScanner : ITokenScanner
     {
-        static readonly dynamic[] _matches = new dynamic[]
-            {
-                new { Pattern = "last", Tag = new Grabber(Grabber.Type.Last) },
-                new { Pattern = "next", Tag = new Grabber(Grabber.Type.Next) },
-                new { Pattern = "this", Tag = new Grabber(Grabber.Type.This) }
-            };
+        private static readonly Dictionary<string, Grabber> _matches = new Dictionary<string, Grabber>
+        {
+            {"last", new Grabber(Grabber.Type.Last)},
+            {"next", new Grabber(Grabber.Type.Next)},
+            {"this", new Grabber(Grabber.Type.This)}
+        };
 
         public IList<Token> Scan(IList<Token> tokens, Options options)
         {
@@ -21,9 +21,9 @@ namespace Chronic
         {
             foreach (var match in _matches)
             {
-                if (match.Pattern == token.Value)
+                if (match.Key == token.Value)
                 {
-                    token.Tag(match.Tag);
+                    token.Tag(match.Value);
                 }
             }
         }
